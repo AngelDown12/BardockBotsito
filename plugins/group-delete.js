@@ -1,8 +1,11 @@
-let handler = async (m, { conn }) => {
+let handler = async (m, { conn, isAdmin, isBotAdmin }) => {
+  if (!m.isGroup) return global.dfail('group', m, conn)
+  if (!isAdmin) return global.dfail('admin', m, conn)
+  if (!isBotAdmin) return global.dfail('botAdmin', m, conn)
   if (!m.quoted) return conn.reply(m.chat, '🚩 Responde al mensaje que deseas eliminar.', m, rcanal)
 
   try {
-    let key = m.quoted.key || m.quoted.vM?.key
+    const key = m.quoted.key || m.quoted.vM?.key
     if (!key?.id || !key?.participant) throw false
 
     await conn.sendMessage(m.chat, {
@@ -24,11 +27,13 @@ let handler = async (m, { conn }) => {
   }
 }
 
+// ❌ NO pongas estos flags para evitar duplicación de errores
+// handler.group = true
+// handler.admin = true
+// handler.botAdmin = true
+
 handler.help = ['delete']
 handler.tags = ['group']
 handler.command = /^del(ete)?$/i
-handler.group = true
-handler.admin = true
-handler.botAdmin = true
 
 export default handler
