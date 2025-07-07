@@ -5,17 +5,19 @@ let handler = async (m, { conn, isAdmin, isBotAdmin }) => {
   if (!m.quoted) return conn.reply(m.chat, '🚩 Responde al mensaje que deseas eliminar.', m, rcanal)
 
   try {
-    // Eliminar mensaje citado
+    const { id, fromMe, participant } = m.quoted.key
+    const targetParticipant = participant || m.quoted.participant || m.quoted.sender || m.quoted.key.remoteJid
+
     await conn.sendMessage(m.chat, {
       delete: {
         remoteJid: m.chat,
-        fromMe: m.quoted.key.fromMe || false,
-        id: m.quoted.key.id,
-        participant: m.quoted.key.participant || m.quoted.participant || m.quoted.sender
+        fromMe: fromMe || false,
+        id,
+        participant: fromMe ? undefined : targetParticipant
       }
     })
 
-    // Opcional: eliminar el mensaje del comando `.delete`
+    // Eliminar el mensaje del comando `.delete` (opcional)
     await conn.sendMessage(m.chat, {
       delete: {
         remoteJid: m.chat,
@@ -26,7 +28,7 @@ let handler = async (m, { conn, isAdmin, isBotAdmin }) => {
     })
 
   } catch (e) {
-    conn.reply(m.chat, '❌ No se pudo eliminar el mensaje.', m, rcanal)
+    return conn.reply(m.chat, '❌ No se pudo eliminar el mensaje.\n🔧 Asegúrate de que el bot sea admin y que el mensaje no haya sido eliminado antes.', m, rcanal)
   }
 }
 
@@ -34,5 +36,5 @@ handler.help = ['delete']
 handler.tags = ['group']
 handler.command = /^del(ete)?$/i
 
-// ⚠️ NO pongas handler.admin = true, ya haces validaciones manuales
+// No uses handler.admin = true porque ya haces validación manual
 export default handler
