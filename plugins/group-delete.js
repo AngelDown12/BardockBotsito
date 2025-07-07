@@ -6,18 +6,18 @@ let handler = async (m, { conn, isAdmin, isBotAdmin }) => {
 
   try {
     const { id, fromMe, participant } = m.quoted.key
-    const targetParticipant = participant || m.quoted.participant || m.quoted.sender || m.quoted.key.remoteJid
+    const target = participant || m.quoted.participant || m.quoted.sender || m.quoted.key.remoteJid
 
     await conn.sendMessage(m.chat, {
       delete: {
         remoteJid: m.chat,
-        fromMe: fromMe || false,
-        id,
-        participant: fromMe ? undefined : targetParticipant
+        fromMe: !!fromMe,
+        id: id,
+        participant: fromMe ? undefined : target
       }
     })
 
-    // Eliminar el mensaje del comando `.delete` (opcional)
+    // Opcional: Eliminar también el mensaje del comando .delete
     await conn.sendMessage(m.chat, {
       delete: {
         remoteJid: m.chat,
@@ -28,7 +28,7 @@ let handler = async (m, { conn, isAdmin, isBotAdmin }) => {
     })
 
   } catch (e) {
-    return conn.reply(m.chat, '❌ No se pudo eliminar el mensaje.\n🔧 Asegúrate de que el bot sea admin y que el mensaje no haya sido eliminado antes.', m, rcanal)
+    return conn.reply(m.chat, '❌ No se pudo eliminar el mensaje.\n🔧 Puede que ya haya sido eliminado o no tenga permisos.', m, rcanal)
   }
 }
 
@@ -36,5 +36,4 @@ handler.help = ['delete']
 handler.tags = ['group']
 handler.command = /^del(ete)?$/i
 
-// No uses handler.admin = true porque ya haces validación manual
 export default handler
