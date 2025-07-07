@@ -2,10 +2,10 @@ import fetch from 'node-fetch'
 
 export async function before(m, { conn }) {
 let name = `𝐁𝐚𝐫𝐝𝐨𝐜𝐤 𝐁𝐨𝐭 𝐌𝐃 🔥`
-let imagenes = ["https://files.catbox.moe/6dewf4.jpg",
-"https://files.catbox.moe/6dewf4.jpg",
-"https://files.catbox.moe/6dewf4.jpg",
-"https://files.catbox.moe/6dewf4.jpg",]
+let imagenes = ["https://files.catbox.moe/wwa311.jpg",
+"https://files.catbox.moe/wwa311.jpg",
+"https://files.catbox.moe/wwa311.jpg",
+"https://files.catbox.moe/wwa311.jpg",]
 
 let icono = imagenes[Math.floor(Math.random() * imagenes.length)]
 
