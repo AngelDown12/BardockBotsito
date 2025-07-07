@@ -1,7 +1,7 @@
 import fetch from 'node-fetch'
 
 export async function before(m, { conn }) {
-let name = `ᥴһᥲᥒᥒᥱᥣ-sᥲsᥙkᥱ ᑲ᥆𝗍 mძ 🌀`
+let name = `𝐁𝐚𝐫𝐝𝐨𝐜𝐤 𝐁𝐨𝐭 𝐌𝐃 🔥`
 let imagenes = ["https://files.catbox.moe/6dewf4.jpg",
 "https://files.catbox.moe/6dewf4.jpg",
 "https://files.catbox.moe/6dewf4.jpg",
@@ -13,7 +13,7 @@ global.rcanal = {
  contextInfo: {
              isForwarded: true,
     forwardedNewsletterMessageInfo: {
-      newsletterJid: "120363419364337473@newsletter",
+      newsletterJid: "120363420167775602@newsletter",
       serverMessageId: 100,
       newsletterName: name,
    }, 
@@ -62,7 +62,7 @@ global.icono = [
     contextInfo: {
             isForwarded: true,
     forwardedNewsletterMessageInfo: {
-      newsletterJid: "120363419364337473@newsletter",
+      newsletterJid: "120363420167775602@newsletter",
       serverMessageId: 100,
       newsletterName: name,
     },
