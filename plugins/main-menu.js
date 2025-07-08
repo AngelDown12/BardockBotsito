@@ -362,8 +362,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
 
 `.trim();
 
-  await conn.sendMessage(m.chat, { image: { url: img }, caption: text }, { quoted: m });
-};
+  await conn.sendMessage(global.rcanal, { image: { url: img }, caption: text }, { quoted: m });
 
 handler.customPrefix = /^(menu|menú|ayuda|help)$/i;
 handler.command = new RegExp; // para que funcione sin prefijo
