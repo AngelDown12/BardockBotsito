@@ -367,10 +367,10 @@ let handler = async (m, { conn, usedPrefix, command }) => {
   caption: text,
   contextInfo: {
     externalAdReply: {
-      title: '',
-      body: 'El mejor menú 🍷',
+      title: '𝐁𝐚𝐫𝐝𝐨𝐜𝐤 𝐁𝐨𝐭 🔥',
+      body: '𝐁𝐚𝐫𝐝𝐨𝐜𝐤 𝐁𝐨𝐭 🔥',
       mediaType: 1,
-      thumbnailUrl: 'https://qu.ax/tNPfx.jpg',
+      thumbnailUrl: 'https://files.catbox.moe/wwa311.jpg',
       renderLargerThumbnail: true,
       sourceUrl: '' // link si quieres
     }
