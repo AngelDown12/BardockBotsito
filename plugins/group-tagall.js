@@ -44,7 +44,7 @@ const handler = async (m, { conn, participants, isAdmin, isOwner }) => {
   if (!(isAdmin || isOwner)) return global.dfail('admin', m, conn);
 
   const texto = (m.text || '').trim().replace(/^(\.|)(tagall|invocar|invocacion|invocación|todos|talibanes)\s*/i, '');
-  let mensaje = `𝐈𝐍𝐕𝐎𝐂𝐀𝐍𝐃𝐎 \n\n${texto ? '𝐀𝐕𝐈𝐒𝐎: ' + texto + '\n\n' : ''}`;
+  let mensaje = `𝐈𝐍𝐕𝐎𝐂𝐀𝐍𝐃𝐎 𝐒𝐀𝐘𝐀𝐘𝐈𝐍𝐄𝐒 🔥\n\n${texto ? '𝐀𝐕𝐈𝐒𝐎: ' + texto + '\n\n' : ''}`;
 
   for (const user of participants) {
     const numero = user.id.split('@')[0];
