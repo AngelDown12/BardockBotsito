@@ -362,7 +362,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
 
 `.trim();
 
-  await conn.sendMessage(global.rcanal, {
+  await conn.sendMessage(m.chat, {
   image: { url: img },
   caption: text,
   contextInfo: {
