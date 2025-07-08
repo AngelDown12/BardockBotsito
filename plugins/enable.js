@@ -229,14 +229,25 @@ para el bot
       throw false
   }
 
-m.reply(`⚠️ *sᥲsᥙkᥱ ᑲ᥆𝗍 mძ 🌀 Notificación* ⚠️
+await conn.sendMessage(rcanal, {
+  text: `⚠️ *Bardock Bot 🔥 Notificación* ⚠️
 
 💎 *Comando ejecutado:* *${type}*
-👤 *Estado actual:* *${isEnable? 'Activado ✅': 'Desactivado ❌'}*
-📍 *Ámbito:* ${isAll? '*Todo el Bot* 🌐': isUser? '*Usuario específico* 👥': '*Este Chat* 💬'}
+👤 *Estado actual:* *${isEnable ? 'Activado ✅' : 'Desactivado ❌'}*
+📍 *Ámbito:* ${isAll ? '*Todo el Bot* 🌐' : isUser ? '*Usuario específico* 👥' : '*Este Chat* 💬'}
 
-🚀 *Muchas gracias por usar sᥲsᥙkᥱ ᑲ᥆𝗍 mძ 🌀*🎖️`)
-}
+🚀 *Gracias por usar Bardock Bot 🔥*`,
+  contextInfo: {
+    externalAdReply: {
+      title: '𝐁𝐚𝐫𝐝𝐨𝐜𝐤 𝐁𝐨𝐭 🔥',
+      body: '𝐁𝐚𝐫𝐝𝐨𝐜𝐤 𝐁𝐨𝐭 🔥',
+      mediaType: 1,
+      thumbnailUrl: 'https://files.catbox.moe/wwa311.jpg',
+      renderLargerThumbnail: true,
+      sourceUrl: ''
+    }
+  }
+}, { quoted: m });
 
 handler.help = ['enable', 'disable', 'on', 'off']
 handler.tags = ['nable']
