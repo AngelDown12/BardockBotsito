@@ -1,5 +1,5 @@
 let handler = async (m, { conn, usedPrefix, command }) => {
-  const img = 'https://qu.ax/tNPfx.jpg';
+  const img = 'https://files.catbox.moe/wwa311.jpg';
   const name = await conn.getName(m.sender);
   const text = `🪙 𝐌 𝐔 𝐋 𝐓 𝐈 - 𝐌 𝐄 𝐍 𝐔́ 
 
