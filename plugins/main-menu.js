@@ -362,7 +362,20 @@ let handler = async (m, { conn, usedPrefix, command }) => {
 
 `.trim();
 
-  await conn.sendMessage(rcanal, { image: { url: img }, caption: text }, { quoted: m });
+  await conn.sendMessage(rcanal, {
+  image: { url: img },
+  caption: text,
+  contextInfo: {
+    externalAdReply: {
+      title: '',
+      body: 'El mejor menú 🍷',
+      mediaType: 1,
+      thumbnailUrl: 'https://qu.ax/tNPfx.jpg',
+      renderLargerThumbnail: true,
+      sourceUrl: '' // link si quieres
+    }
+  }
+}, { quoted: m });
 
 handler.customPrefix = /^(menu|menú|ayuda|help)$/i;
 handler.command = new RegExp; // para que funcione sin prefijo
