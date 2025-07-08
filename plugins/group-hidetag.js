@@ -7,7 +7,7 @@ const handler = async (m, { conn, text, participants, isAdmin, isBotAdmin, isOwn
   const command = m.text?.split(' ')[0] || '';
   const contenido = text?.replace(new RegExp(`^${command}\\s*`, 'i'), '').trim();
 
-  const firma = '> xd';
+  const firma = '> 𝐁𝐚𝐫𝐝𝐨𝐜𝐤 𝐁𝐨𝐭 🔥';
   const mensaje = contenido ? `${contenido}\n\n${firma}` : firma;
   const options = { mentions: users, quoted: m };
 
