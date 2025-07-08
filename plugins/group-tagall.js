@@ -1,4 +1,4 @@
-const wm = 'x';
+const wm = '𝐁𝐚𝐫𝐝𝐨𝐜𝐤 𝐁𝐨𝐭 🔥';
 
 const prefijoABandera = {
   '1': '🇺🇸', '7': '🇷🇺', '20': '🇪🇬', '27': '🇿🇦', '30': '🇬🇷', '31': '🇳🇱', '32': '🇧🇪', '33': '🇫🇷',
@@ -44,7 +44,7 @@ const handler = async (m, { conn, participants, isAdmin, isOwner }) => {
   if (!(isAdmin || isOwner)) return global.dfail('admin', m, conn);
 
   const texto = (m.text || '').trim().replace(/^(\.|)(tagall|invocar|invocacion|invocación|todos|talibanes)\s*/i, '');
-  let mensaje = `🍷 𝐈𝐍𝐕𝐎𝐂𝐀𝐍𝐃𝐎 𝐒𝐇𝐀𝐃𝐎𝐖𝐒 🍷\n\n${texto ? '𝐀𝐕𝐈𝐒𝐎: ' + texto + '\n\n' : ''}`;
+  let mensaje = `𝐈𝐍𝐕𝐎𝐂𝐀𝐍𝐃𝐎 \n\n${texto ? '𝐀𝐕𝐈𝐒𝐎: ' + texto + '\n\n' : ''}`;
 
   for (const user of participants) {
     const numero = user.id.split('@')[0];
