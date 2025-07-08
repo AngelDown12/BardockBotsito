@@ -362,17 +362,17 @@ let handler = async (m, { conn, usedPrefix, command }) => {
 
 `.trim();
 
-  await conn.sendMessage(rcanal, {
+  await conn.sendMessage(global.rcanal, {
   image: { url: img },
   caption: text,
   contextInfo: {
     externalAdReply: {
       title: '𝐁𝐚𝐫𝐝𝐨𝐜𝐤 𝐁𝐨𝐭 🔥',
       body: '𝐁𝐚𝐫𝐝𝐨𝐜𝐤 𝐁𝐨𝐭 🔥',
-      mediaType: 1,
       thumbnailUrl: 'https://files.catbox.moe/wwa311.jpg',
+      mediaType: 1,
       renderLargerThumbnail: true,
-      sourceUrl: '' // link si quieres
+      sourceUrl: ''
     }
   }
 }, { quoted: m });
