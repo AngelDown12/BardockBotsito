@@ -3,11 +3,11 @@ import PhoneNumber from 'awesome-phonenumber';
 let handler = async (m, { conn }) => {
   m.react('🔥');
 
-  const imageUrl = 'https://qu.ax/tNPfx.jpg';
+  const imageUrl = 'https://files.catbox.moe/wwa311.jpg';
   const numCreador = '5215565238431';
   const ownerJid = numCreador + '@s.whatsapp.net';
   const name = await conn.getName(ownerJid) || 'Alee';
-  const about = (await conn.fetchStatus(ownerJid).catch(() => {}))?.status || `𝐒𝐨𝐲 𝐂𝐫𝐢𝐬𝐭𝐢𝐚𝐧, 𝐃𝐮𝐞𝐧̃𝐨 𝐝𝐞𝐥 𝐁𝐨𝐭 𝐒𝐡𝐚𝐝𝐨𝐰 𝐁𝐨𝐭 🔥.`;
+  const about = (await conn.fetchStatus(ownerJid).catch(() => {}))?.status || `𝐒𝐨𝐲 𝐂𝐫𝐢𝐬𝐭𝐢𝐚𝐧, 𝐃𝐮𝐞𝐧̃𝐨 𝐝𝐞𝐥 𝐁𝐨𝐭  𝐁𝐨𝐭 🔥.`;
   const empresa = '𝐂𝐫𝐢𝐬𝐭𝐢𝐚𝐧 - 𝐒𝐞𝐫𝐯𝐢𝐜𝐢𝐨𝐬 𝐭𝐞𝐜𝐧𝐨𝐥𝐨𝐠𝐢𝐜𝐨𝐬';
   const instagramUrl = 'https://www.instagram.com/bki_hm66';
 
@@ -42,7 +42,7 @@ contextInfo: {
     title: '🍷 𝐒𝐡𝐚𝐝𝐨𝐰 𝐁𝐨𝐭 🍷',
     body: '🍷 𝑺𝒉𝒂𝒅𝒐𝒘 𝑩𝒐𝒕 🍷',
     mediaType: 1,
-    thumbnailUrl: 'https://qu.ax/tNPfx.jpg',
+    thumbnailUrl: 'https://files.catbox.moe/wwa311.jpg',
     renderLargerThumbnail: false,
     sourceUrl: ''
   }
