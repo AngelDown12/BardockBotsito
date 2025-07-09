@@ -7,7 +7,7 @@ let handler = async (m, { conn }) => {
   const numCreador = '5215565238431';
   const ownerJid = numCreador + '@s.whatsapp.net';
   const name = await conn.getName(ownerJid) || 'Alee';
-  const about = (await conn.fetchStatus(ownerJid).catch(() => {}))?.status || `𝐒𝐨𝐲 𝐂𝐫𝐢𝐬𝐭𝐢𝐚𝐧, 𝐃𝐮𝐞𝐧̃𝐨 𝐝𝐞𝐥 𝐁𝐨𝐭  𝐁𝐨𝐭 🔥.`;
+  const about = (await conn.fetchStatus(ownerJid).catch(() => {}))?.status || `𝐒𝐨𝐲 𝐂𝐫𝐢𝐬𝐭𝐢𝐚𝐧, 𝐃𝐮𝐞𝐧̃𝐨 𝐝𝐞𝐥 𝐁𝐨𝐭 𝐁𝐚𝐫𝐝𝐨𝐜𝐤 𝐁𝐨𝐭 🔥.`;
   const empresa = '𝐂𝐫𝐢𝐬𝐭𝐢𝐚𝐧 - 𝐒𝐞𝐫𝐯𝐢𝐜𝐢𝐨𝐬 𝐭𝐞𝐜𝐧𝐨𝐥𝐨𝐠𝐢𝐜𝐨𝐬';
   const instagramUrl = 'https://www.instagram.com/bki_hm66';
 
@@ -31,7 +31,7 @@ X-WA-BIZ-NAME:${name}
 X-WA-BIZ-DESCRIPTION:${about}
 END:VCARD`.trim();
 
-  const textbot = '𝐒𝐡𝐚𝐝𝐨𝐰 𝐁𝐨𝐭 🍷';
+  const textbot = '𝐁𝐚𝐫𝐝𝐨𝐜𝐤 𝐁𝐨𝐭 🔥';
   const dev = 'Cristian';
 
   await conn.sendMessage(
@@ -39,8 +39,8 @@ END:VCARD`.trim();
     {
 contextInfo: {
   externalAdReply: {
-    title: '🍷 𝐒𝐡𝐚𝐝𝐨𝐰 𝐁𝐨𝐭 🍷',
-    body: '🍷 𝑺𝒉𝒂𝒅𝒐𝒘 𝑩𝒐𝒕 🍷',
+    title: '𝐁𝐚𝐫𝐝𝐨𝐜𝐤 𝐁𝐨𝐭 🔥',
+    body: '𝐁𝐚𝐫𝐝𝐨𝐜𝐤 𝐁𝐨𝐭 🔥',
     mediaType: 1,
     thumbnailUrl: 'https://files.catbox.moe/wwa311.jpg',
     renderLargerThumbnail: false,
