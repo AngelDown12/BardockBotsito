@@ -1,23 +1,79 @@
-async function handler(m, { conn }) {
-    let numcreador = '584146277368';
-    let ownerJid = numcreador + '@s.whatsapp.net';
+import PhoneNumber from 'awesome-phonenumber';
 
-    let name = await conn.getName(ownerJid) || 'Owner';
-    let about = (await conn.fetchStatus(ownerJid).catch(() => {}))?.status || 'Creador de bots de WhatsApp y del sᥲsᥙkᥱ ᑲ᥆𝗍 mძ 🌀';
-    let empresa = 'Barboza- Servicios Tecnológicos';
+let handler = async (m, { conn }) => {
+  m.react('🔥');
 
-    let caption = `
-✨ *Información del Dueño:* ✨
+  const imageUrl = 'https://qu.ax/tNPfx.jpg';
+  const numCreador = '5215565238431';
+  const ownerJid = numCreador + '@s.whatsapp.net';
+  const name = await conn.getName(ownerJid) || 'Alee';
+  const about = (await conn.fetchStatus(ownerJid).catch(() => {}))?.status || `𝐒𝐨𝐲 𝐂𝐫𝐢𝐬𝐭𝐢𝐚𝐧, 𝐃𝐮𝐞𝐧̃𝐨 𝐝𝐞𝐥 𝐁𝐨𝐭 𝐒𝐡𝐚𝐝𝐨𝐰 𝐁𝐨𝐭 🔥.`;
+  const empresa = '𝐂𝐫𝐢𝐬𝐭𝐢𝐚𝐧 - 𝐒𝐞𝐫𝐯𝐢𝐜𝐢𝐨𝐬 𝐭𝐞𝐜𝐧𝐨𝐥𝐨𝐠𝐢𝐜𝐨𝐬';
+  const instagramUrl = 'https://www.instagram.com/bki_hm66';
 
-*👤 Nombre:* ${name}
-*📞 Número:* wa.me/${numcreador}
-*📝 Descripción:* ${about}
-*🏢 Empresa:* ${empresa}
-*📧 Email:* sebastianbarbaro82@gmail.com
-*📸 Instagram:* https://www.instagram.com/sebastian_barboza13
-`;
+  const vcard = `
+BEGIN:VCARD
+VERSION:3.0
+N:;${name};;;
+FN:${name}
+ORG:${empresa};
+TITLE:CEO & Fundador
+TEL;waid=${numCreador}:${new PhoneNumber('+' + numCreador).getNumber('international')}
+EMAIL:correo@empresa.com
+URL:${instagramUrl}
+NOTE:${about}
+ADR:;;Dirección de tu empresa;;;;
+X-ABADR:ES
+X-ABLabel:Dirección Web
+X-ABLabel:Correo Electrónico
+X-ABLabel:Teléfono de contacto
+X-WA-BIZ-NAME:${name}
+X-WA-BIZ-DESCRIPTION:${about}
+END:VCARD`.trim();
 
-    await conn.sendMessage(m.chat, { text: caption }, { quoted: m });
+  const textbot = '𝐒𝐡𝐚𝐝𝐨𝐰 𝐁𝐨𝐭 🍷';
+  const dev = 'Cristian';
+
+  await conn.sendMessage(
+    m.chat,
+    {
+contextInfo: {
+  externalAdReply: {
+    title: '🍷 𝐒𝐡𝐚𝐝𝐨𝐰 𝐁𝐨𝐭 🍷',
+    body: '🍷 𝑺𝒉𝒂𝒅𝒐𝒘 𝑩𝒐𝒕 🍷',
+    mediaType: 1,
+    thumbnailUrl: 'https://qu.ax/tNPfx.jpg',
+    renderLargerThumbnail: false,
+    sourceUrl: ''
+  }
+},
+
+      contacts: {
+        displayName: name,
+        contacts: [{ vcard }]
+      },
+      contextInfo: {
+        mentionedJid: [m.sender],
+        isForwarded: true,
+        forwardingScore: 999,
+        forwardedNewsletterMessageInfo: {
+          newsletterJid: 'Alee'.id,
+          newsletterName: 'Alee'.name,
+          serverMessageId: -1,
+        },
+        externalAdReply: {
+          title: textbot,
+          body: dev,
+          thumbnailUrl: imageUrl,
+          sourceUrl: instagramUrl,
+          mediaType: 1,
+          showAdAttribution: true,
+          renderLargerThumbnail: true,
+        },
+      }
+    },
+    { quoted: m }
+  );
 }
 
 handler.help = ['owner'];
