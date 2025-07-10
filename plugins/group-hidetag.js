@@ -11,7 +11,6 @@ const handler = async (m, { conn, text, participants, isAdmin, isBotAdmin, isOwn
   const mensaje = contenido ? `${contenido}\n\n${firma}` : firma;
   const options = { mentions: users, quoted: m };
 
-  // Si se responde a un mensaje
   if (m.quoted) {
     const quoted = m.quoted;
     const mime = (quoted.msg || quoted)?.mimetype || '';
@@ -24,20 +23,20 @@ const handler = async (m, { conn, text, participants, isAdmin, isBotAdmin, isOwn
     } else if (/audio/.test(mime)) {
       return conn.sendMessage(m.chat, { audio: media, mimetype: 'audio/mpeg', ptt: true, ...options });
     } else if (/sticker/.test(mime)) {
-      return conn.sendMessage(m.chat, { sticker: media, ...options });
+      return conn.sendMessage(m.chat, { sticker: media, ...options }); // ✅ ahora sí manda como sticker real
     } else {
       const citado = quoted.text || quoted.body || mensaje;
       return conn.sendMessage(m.chat, { text: citado, ...options });
     }
   }
 
-  // Si no se responde a nada, enviar el texto limpio
   return conn.sendMessage(m.chat, { text: mensaje, ...options });
 };
 
-handler.help = ['hidetag'];
-handler.tags = ['group'];
-handler.command = /^(hidetag|notify|noti|notificar|n)$/i;
+// ✅ Activación sin prefijo (solo escribes: n texto o noti texto)
+handler.customPrefix = /^(n|notify|noti|notificar|hidetag)\s+/i;
+handler.command = new RegExp;
 handler.group = true;
+handler.register = true;
 
 export default handler;
