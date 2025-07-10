@@ -1,39 +1,106 @@
-const handler = async (m, { conn, text, participants, isAdmin, isOwner, isBotAdmin }) => {
-  if (!m.isGroup) return global.dfail('group', m, conn);
-  if (!isAdmin && !isOwner) return global.dfail('admin', m, conn);
-  if (!isBotAdmin) return global.dfail('botAdmin', m, conn);
+const fs = require("fs");
+const path = require("path");
+const { downloadContentFromMessage } = require("@whiskeysockets/baileys");
 
-  const users = participants.map(p => p.id);
-  const contenido = text?.trim() || '';
-  const firma = '> 𝐁𝐚𝐫𝐝𝐨𝐜𝐤 𝐁𝐨𝐭 🔥';
-  const mensaje = contenido ? `${contenido}\n\n${firma}` : firma;
-  const opciones = { mentions: users, quoted: m };
+const handler = async (msg, { conn, args }) => {
+  const rawID = conn.user?.id || "";
+  const subbotID = rawID.split(":")[0] + "@s.whatsapp.net";
 
-  if (m.quoted) {
-    const quoted = m.quoted;
-    const mime = quoted?.mimetype || '';
-    const media = /image|video|audio|sticker/.test(mime) ? await quoted.download() : null;
+  const prefixPath = path.resolve("prefixes.json");
+  let prefixes = {};
+  if (fs.existsSync(prefixPath)) {
+    prefixes = JSON.parse(fs.readFileSync(prefixPath, "utf-8"));
+  }
+  const usedPrefix = prefixes[subbotID] || ".";
 
-    if (/sticker/.test(mime)) {
-      return conn.sendMessage(m.chat, { sticker: media, ...opciones });
-    } else if (/image/.test(mime)) {
-      return conn.sendMessage(m.chat, { image: media, caption: mensaje, ...opciones });
-    } else if (/video/.test(mime)) {
-      return conn.sendMessage(m.chat, { video: media, caption: mensaje, mimetype: 'video/mp4', ...opciones });
-    } else if (/audio/.test(mime)) {
-      return conn.sendMessage(m.chat, { audio: media, mimetype: 'audio/mpeg', ptt: true, ...opciones });
-    } else {
-      const citado = quoted.text || quoted.body || mensaje;
-      return conn.sendMessage(m.chat, { text: citado, ...opciones });
+  const chatId = msg.key.remoteJid;
+  const senderJid = msg.key.participant || msg.key.remoteJid;
+  const senderNum = senderJid.replace(/[^0-9]/g, "");
+  const botNumber = conn.user?.id.split(":")[0].replace(/[^0-9]/g, "");
+
+  if (!chatId.endsWith("@g.us")) {
+    return await conn.sendMessage(chatId, {
+      text: "⚠️ Este comando solo se puede usar en grupos."
+    }, { quoted: msg });
+  }
+
+  const groupMetadata = await conn.groupMetadata(chatId);
+  const participant = groupMetadata.participants.find(p => p.id.includes(senderNum));
+  const isAdmin = participant?.admin === "admin" || participant?.admin === "superadmin";
+  const isBot = botNumber === senderNum;
+
+  if (!isAdmin && !isBot) {
+    return await conn.sendMessage(chatId, {
+      text: "❌ Solo los administradores del grupo o el subbot pueden usar este comando."
+    }, { quoted: msg });
+  }
+
+  const allMentions = groupMetadata.participants.map(p => p.id);
+  let messageToForward = null;
+  let hasMedia = false;
+
+  if (msg.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
+    const quoted = msg.message.extendedTextMessage.contextInfo.quotedMessage;
+
+    if (quoted.conversation) {
+      messageToForward = { text: quoted.conversation };
+    } else if (quoted.extendedTextMessage?.text) {
+      messageToForward = { text: quoted.extendedTextMessage.text };
+    } else if (quoted.imageMessage) {
+      const stream = await downloadContentFromMessage(quoted.imageMessage, "image");
+      let buffer = Buffer.alloc(0);
+      for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
+      const mimetype = quoted.imageMessage.mimetype || "image/jpeg";
+      const caption = quoted.imageMessage.caption || "";
+      messageToForward = { image: buffer, mimetype, caption };
+      hasMedia = true;
+    } else if (quoted.videoMessage) {
+      const stream = await downloadContentFromMessage(quoted.videoMessage, "video");
+      let buffer = Buffer.alloc(0);
+      for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
+      const mimetype = quoted.videoMessage.mimetype || "video/mp4";
+      const caption = quoted.videoMessage.caption || "";
+      messageToForward = { video: buffer, mimetype, caption };
+      hasMedia = true;
+    } else if (quoted.audioMessage) {
+      const stream = await downloadContentFromMessage(quoted.audioMessage, "audio");
+      let buffer = Buffer.alloc(0);
+      for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
+      const mimetype = quoted.audioMessage.mimetype || "audio/mp3";
+      messageToForward = { audio: buffer, mimetype };
+      hasMedia = true;
+    } else if (quoted.stickerMessage) {
+      const stream = await downloadContentFromMessage(quoted.stickerMessage, "sticker");
+      let buffer = Buffer.alloc(0);
+      for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
+      messageToForward = { sticker: buffer };
+      hasMedia = true;
+    } else if (quoted.documentMessage) {
+      const stream = await downloadContentFromMessage(quoted.documentMessage, "document");
+      let buffer = Buffer.alloc(0);
+      for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
+      const mimetype = quoted.documentMessage.mimetype || "application/pdf";
+      const caption = quoted.documentMessage.caption || "";
+      messageToForward = { document: buffer, mimetype, caption };
+      hasMedia = true;
     }
   }
 
-  return conn.sendMessage(m.chat, { text: mensaje, ...opciones });
+  if (!hasMedia && args.join(" ").trim().length > 0) {
+    messageToForward = { text: args.join(" ") };
+  }
+
+  if (!messageToForward) {
+    return await conn.sendMessage(chatId, {
+      text: "⚠️ Debes responder a un mensaje o proporcionar un texto para reenviar."
+    }, { quoted: msg });
+  }
+
+  await conn.sendMessage(chatId, {
+    ...messageToForward,
+    mentions: allMentions
+  }, { quoted: msg });
 };
 
-// 🟡 Sin prefijo: solo al escribir "n", "noti", etc.
-handler.customPrefix = /^(n|hidetag|notify|noti|notificar|todos)(\s+.*)?$/i;
-handler.command = new RegExp(); // ← evita conflictos con .comandos
-handler.group = true;
-
-export default handler;
+handler.command = ["n"];
+module.exports = handler;
