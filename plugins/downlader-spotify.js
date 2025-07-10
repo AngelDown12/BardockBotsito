@@ -1,11 +1,11 @@
 import fetch from 'node-fetch';
 
-let handler = async (m, { conn, args, text }) => {
+let handler = async (m, { conn, text }) => {
   if (!text) {
     return m.reply(
       `╭─⬣「 *bardock Ia* 」⬣
 │ ≡◦ 🎧 *Uso correcto del comando:*
-│ ≡◦ spotify shakira soltera
+│ ≡◦ play shakira soltera
 ╰─⬣\n> © Bardock Ia`
     );
   }
@@ -53,13 +53,12 @@ let handler = async (m, { conn, args, text }) => {
   }
 };
 
-handler.help = ['spotify'];
+handler.help = ['play'];
 handler.tags = ['descargas'];
-handler.command = /^spotify$/i;
-handler.register = true;
+handler.command = /^$/; // ← no usa prefijo
 
-// ✅ Esto permite que funcione sin prefijo
-handler.customPrefix = /^spotify\s+/i;
+// 🟢 Detecta mensajes que comienzan con "play " sin prefijo
+handler.customPrefix = /^play\s+/i;
 handler.explicit = true;
 
 export default handler;
