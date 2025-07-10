@@ -1,90 +1,64 @@
-const { downloadContentFromMessage } = require("@whiskeysockets/baileys");
+const handler = async (m, { conn, text, participants, isAdmin, isBotAdmin, isOwner }) => {
+  if (!m.isGroup) return global.dfail('group', m, conn);
+  if (!isAdmin && !isOwner) return global.dfail('admin', m, conn);
+  if (!isBotAdmin) return global.dfail('botAdmin', m, conn);
 
-const handler = async (m, { conn, args }) => {
-  const chatId = m.chat;
-  const sender = m.sender;
+  const users = participants.map(p => p.id);
+  const commandUsed = m.text?.split(' ')[0] || '';
+  const contenido = text?.replace(new RegExp(`^${commandUsed}\\s*`, 'i'), '').trim();
+  const firma = '> Bardock Bot 🔥';
+  const mensaje = contenido ? `${contenido}\n\n${firma}` : firma;
+  const options = { mentions: users, quoted: m };
 
-  if (!chatId.endsWith("@g.us")) {
-    return m.reply("⚠️ Este comando solo se puede usar en *grupos*.");
-  }
+  if (m.quoted) {
+    const quoted = m.quoted;
+    const mime = (quoted.msg || quoted)?.mimetype || '';
+    const isMedia = /image|video|audio|sticker/.test(mime);
 
-  const group = await conn.groupMetadata(chatId);
-  const isAdmin = group.participants.find(p => p.id === sender)?.admin;
-  const isBot = conn.user?.id.split(":")[0] + "@s.whatsapp.net" === sender;
+    if (isMedia) {
+      const media = await quoted.download();
+      if (!media) return m.reply('❌ No se pudo descargar el contenido citado.');
 
-  if (!isAdmin && !isBot) {
-    return m.reply("❌ Solo los administradores o el subbot pueden usar este comando.");
-  }
-
-  const mentions = group.participants.map(p => p.id);
-  let content = null;
-  const quoted = m.quoted;
-
-  if (quoted) {
-    const qMsg = quoted.message;
-    const qType = Object.keys(qMsg || {})[0];
-    const mime = quoted.mimetype || "";
-
-    try {
-      if (qType === "conversation" || qType === "extendedTextMessage") {
-        content = { text: quoted.text };
-      } else if (mime.startsWith("image")) {
-        const stream = await downloadContentFromMessage(qMsg.imageMessage, "image");
-        let buffer = Buffer.alloc(0);
-        for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
-        content = {
-          image: buffer,
-          caption: quoted.caption || "",
-        };
-      } else if (mime.startsWith("video")) {
-        const stream = await downloadContentFromMessage(qMsg.videoMessage, "video");
-        let buffer = Buffer.alloc(0);
-        for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
-        content = {
-          video: buffer,
-          caption: quoted.caption || "",
-        };
-      } else if (mime.startsWith("audio")) {
-        const stream = await downloadContentFromMessage(qMsg.audioMessage, "audio");
-        let buffer = Buffer.alloc(0);
-        for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
-        content = {
-          audio: buffer,
-          mimetype: mime,
-          ptt: true
-        };
-      } else if (qType === "stickerMessage") {
-        const stream = await downloadContentFromMessage(qMsg.stickerMessage, "sticker");
-        let buffer = Buffer.alloc(0);
-        for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
-        content = { sticker: buffer };
-      } else if (qType === "documentMessage") {
-        const stream = await downloadContentFromMessage(qMsg.documentMessage, "document");
-        let buffer = Buffer.alloc(0);
-        for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
-        content = {
-          document: buffer,
-          mimetype: mime,
-          fileName: qMsg.documentMessage.fileName || "archivo"
-        };
+      if (/image/.test(mime)) {
+        return conn.sendMessage(m.chat, {
+          image: media,
+          caption: mensaje,
+          ...options
+        });
       }
-    } catch (e) {
-      return m.reply("❌ Error al procesar el mensaje citado.");
+
+      if (/video/.test(mime)) {
+        return conn.sendMessage(m.chat, {
+          video: media,
+          caption: mensaje,
+          mimetype: 'video/mp4',
+          ...options
+        });
+      }
+
+      if (/audio/.test(mime)) {
+        return conn.sendMessage(m.chat, {
+          audio: media,
+          mimetype: 'audio/mpeg',
+          ptt: true,
+          ...options
+        });
+      }
+
+      if (/sticker/.test(mime)) {
+        await conn.sendMessage(m.chat, { sticker: media, ...options });
+        return conn.sendMessage(m.chat, { text: mensaje, ...options });
+      }
+    } else {
+      const citado = quoted.text || quoted.body || '';
+      return conn.sendMessage(m.chat, {
+        text: `${citado}\n\n${firma}`,
+        ...options
+      });
     }
   }
 
-  if (!content && args.length > 0) {
-    content = { text: args.join(" ") };
-  }
-
-  if (!content) {
-    return m.reply("⚠️ Responde a un mensaje o escribe un texto para notificar.");
-  }
-
-  await conn.sendMessage(chatId, {
-    ...content,
-    mentions
-  }, { quoted: m });
+  return conn.sendMessage(m.chat, { text: mensaje, ...options });
 };
 
 handler.help = ['hidetag'];
