@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { downloadContentFromMessage } = require("@whiskeysockets/baileys");
 
-const handler = async (msg, { conn, args }) => {
+const handler = async (m, { conn, args }) => {
   const rawID = conn.user?.id || "";
   const subbotID = rawID.split(":")[0] + "@s.whatsapp.net";
 
@@ -13,113 +13,83 @@ const handler = async (msg, { conn, args }) => {
   }
   const usedPrefix = prefixes[subbotID] || ".";
 
-  const chatId = msg.key.remoteJid;
-  const senderJid = msg.key.participant || msg.key.remoteJid;
-  const senderNum = senderJid.replace(/[^0-9]/g, "");
+  const chatId = m.chat;
+  const sender = m.sender;
+  const senderNum = sender.replace(/[^0-9]/g, "");
   const botNumber = conn.user?.id.split(":")[0].replace(/[^0-9]/g, "");
 
   if (!chatId.endsWith("@g.us")) {
-    return await conn.sendMessage(chatId, {
-      text: "⚠️ Este comando solo se puede usar en grupos."
-    }, { quoted: msg });
+    return m.reply("⚠️ Este comando solo se puede usar en *grupos*.");
   }
 
   const groupMetadata = await conn.groupMetadata(chatId);
-  const participant = groupMetadata.participants.find(p => p.id.includes(senderNum));
+  const participant = groupMetadata.participants.find(p => p.id === sender);
   const isAdmin = participant?.admin === "admin" || participant?.admin === "superadmin";
   const isBot = botNumber === senderNum;
 
   if (!isAdmin && !isBot) {
-    return await conn.sendMessage(chatId, {
-      text: "❌ Solo los administradores del grupo o el subbot pueden usar este comando."
-    }, { quoted: msg });
+    return m.reply("❌ Solo los administradores del grupo o el subbot pueden usar este comando.");
   }
 
   const allMentions = groupMetadata.participants.map(p => p.id);
-  let messageToForward = null;
-  let hasMedia = false;
+  let contentToSend = null;
 
-  const context = msg.message?.extendedTextMessage?.contextInfo || {};
-  const quoted = context.quotedMessage || context.message || null;
-
+  const quoted = m.quoted;
   if (quoted) {
-    const processMedia = async (streamPromise, mimetype, extra = {}) => {
-      const stream = await streamPromise;
-      let buffer = Buffer.alloc(0);
-      for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
-      if (buffer.length > 10 * 1024 * 1024) {
-        return await conn.sendMessage(chatId, {
-          text: "⚠️ El archivo citado es demasiado grande para reenviarlo (máx. 10 MB)."
-        }, { quoted: msg });
-      }
-      messageToForward = { ...extra, mimetype, ...extra.type === "audio" ? { ptt: true } : {}, buffer };
-      return buffer;
-    };
+    const type = Object.keys(quoted.message)[0];
+    const mime = quoted.mimetype || "";
 
-    if (quoted.conversation) {
-      messageToForward = { text: quoted.conversation };
-    } else if (quoted.extendedTextMessage?.text) {
-      messageToForward = { text: quoted.extendedTextMessage.text };
-    } else if (quoted.imageMessage) {
-      const buffer = await processMedia(downloadContentFromMessage(quoted.imageMessage, "image"), quoted.imageMessage.mimetype || "image/jpeg", {
-        image: true,
-        caption: quoted.imageMessage.caption || ""
-      });
-      if (!buffer) return;
-      hasMedia = true;
-    } else if (quoted.videoMessage) {
-      const buffer = await processMedia(downloadContentFromMessage(quoted.videoMessage, "video"), quoted.videoMessage.mimetype || "video/mp4", {
-        video: true,
-        caption: quoted.videoMessage.caption || ""
-      });
-      if (!buffer) return;
-      hasMedia = true;
-    } else if (quoted.audioMessage) {
-      const buffer = await processMedia(downloadContentFromMessage(quoted.audioMessage, "audio"), quoted.audioMessage.mimetype || "audio/mp3", {
-        audio: true
-      });
-      if (!buffer) return;
-      hasMedia = true;
-    } else if (quoted.stickerMessage) {
-      const stream = await downloadContentFromMessage(quoted.stickerMessage, "sticker");
-      let buffer = Buffer.alloc(0);
-      for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
-      if (buffer.length > 10 * 1024 * 1024) {
-        return await conn.sendMessage(chatId, {
-          text: "⚠️ El sticker citado es demasiado grande para reenviarlo."
-        }, { quoted: msg });
+    try {
+      if (type === "conversation" || type === "extendedTextMessage") {
+        contentToSend = { text: quoted.text };
+      } else if (mime.startsWith("image")) {
+        const stream = await downloadContentFromMessage(quoted.message.imageMessage, "image");
+        let buffer = Buffer.alloc(0);
+        for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
+        contentToSend = { image: buffer, caption: quoted.caption || "" };
+      } else if (mime.startsWith("video")) {
+        const stream = await downloadContentFromMessage(quoted.message.videoMessage, "video");
+        let buffer = Buffer.alloc(0);
+        for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
+        contentToSend = { video: buffer, caption: quoted.caption || "" };
+      } else if (mime.startsWith("audio")) {
+        const stream = await downloadContentFromMessage(quoted.message.audioMessage, "audio");
+        let buffer = Buffer.alloc(0);
+        for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
+        contentToSend = { audio: buffer, mimetype: mime, ptt: true };
+      } else if (type === "stickerMessage") {
+        const stream = await downloadContentFromMessage(quoted.message.stickerMessage, "sticker");
+        let buffer = Buffer.alloc(0);
+        for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
+        contentToSend = { sticker: buffer };
+      } else if (mime.startsWith("application") || type === "documentMessage") {
+        const stream = await downloadContentFromMessage(quoted.message.documentMessage, "document");
+        let buffer = Buffer.alloc(0);
+        for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
+        contentToSend = {
+          document: buffer,
+          mimetype: mime,
+          fileName: quoted.message.documentMessage.fileName || "archivo"
+        };
       }
-      messageToForward = { sticker: buffer };
-      hasMedia = true;
-    } else if (quoted.documentMessage) {
-      const buffer = await processMedia(downloadContentFromMessage(quoted.documentMessage, "document"), quoted.documentMessage.mimetype || "application/pdf", {
-        document: true,
-        caption: quoted.documentMessage.caption || ""
-      });
-      if (!buffer) return;
-      hasMedia = true;
+    } catch (e) {
+      return m.reply("❌ Ocurrió un error al descargar el archivo.");
     }
   }
 
-  if (!hasMedia && args.join(" ").trim().length > 0) {
-    messageToForward = { text: args.join(" ") };
+  if (!contentToSend && args.length > 0) {
+    contentToSend = { text: args.join(" ") };
   }
 
-  if (!messageToForward) {
-    return await conn.sendMessage(chatId, {
-      text: `⚠️ Usa este comando respondiendo a un mensaje *o* escribe un texto después del comando.\n\n📌 Ejemplo: ${usedPrefix}n Hola a todos!`
-    }, { quoted: msg });
+  if (!contentToSend) {
+    return m.reply(`⚠️ Debes responder a un mensaje o escribir un texto después del comando.\n\nEjemplo: *${usedPrefix}n Hola a todos!*`);
   }
 
   await conn.sendMessage(chatId, {
-    ...messageToForward,
+    ...contentToSend,
     mentions: allMentions
-  }, { quoted: msg });
-
-  console.log(`[NOTIFICAR] ${senderNum} usó el comando en ${chatId}`);
+  }, { quoted: m });
 };
 
-handler.customPrefix = /^(n|notificar)$/i;
-handler.command = new RegExp;
-
+handler.command = ["n"];
 module.exports = handler;
