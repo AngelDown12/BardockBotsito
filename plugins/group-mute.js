@@ -1,40 +1,63 @@
-let mutedUsers = new Set();
+const fs = require("fs");
+const path = require("path");
 
-let handler = async (m, { conn, usedPrefix, command, isAdmin, isBotAdmin }) => {
-    if (!isBotAdmin) return conn.reply(m.chat, '⭐ El bot necesita ser administrador.', m);
-    if (!isAdmin) return conn.reply(m.chat, '⭐ Solo los administradores pueden usar este comando.', m);
+const handler = async (msg, { conn }) => {
+  const chatId = msg.key.remoteJid;
+  const senderId = msg.key.participant || msg.key.remoteJid;
+  const senderNum = senderId.replace(/[^0-9]/g, "");
+  const isGroup = chatId.endsWith("@g.us");
+  const isOwner = global.owner.some(([id]) => id === senderNum);
 
-    let user;
-    if (m.quoted) {
-        user = m.quoted.sender;
-    } else {
-        return conn.reply(m.chat, '⭐ Responde al mensaje del usuario que quieres mutear.', m);
-    }
+  if (!isGroup) {
+    return conn.sendMessage(chatId, {
+      text: "❌ Este comando solo puede usarse en grupos."
+    }, { quoted: msg });
+  }
 
-    if (command === "mute") {
-        mutedUsers.add(user);
-        conn.reply(m.chat, `✅ *Usuario muteado:* @${user.split('@')[0]}`, m, { mentions: [user] });
-    } else if (command === "unmute") {
-        mutedUsers.delete(user);
-        conn.reply(m.chat, `✅ *Usuario desmuteado:* @${user.split('@')[0]}`, m, { mentions: [user] });
-    }
+  const metadata = await conn.groupMetadata(chatId);
+  const isAdmin = metadata.participants.find(p => p.id === senderId)?.admin;
+  if (!isAdmin && !isOwner) {
+    return conn.sendMessage(chatId, {
+      text: "❌ Solo *admins* o *dueños* del bot pueden usar este comando."
+    }, { quoted: msg });
+  }
+
+  const context = msg.message?.extendedTextMessage?.contextInfo;
+  const target = context?.participant;
+
+  if (!target) {
+    return conn.sendMessage(chatId, {
+      text: "⚠️ Responde al mensaje del usuario que quieres mutear."
+    }, { quoted: msg });
+  }
+
+  const targetNum = target.replace(/[^0-9]/g, "");
+  const isTargetOwner = global.owner.some(([id]) => id === targetNum);
+
+  if (isTargetOwner) {
+    return conn.sendMessage(chatId, {
+      text: "❌ No puedes mutear al *dueño del bot*."
+    }, { quoted: msg });
+  }
+
+  const mutePath = path.resolve("./mute.json");
+  const muteData = fs.existsSync(mutePath) ? JSON.parse(fs.readFileSync(mutePath)) : {};
+  if (!muteData[chatId]) muteData[chatId] = [];
+
+  if (!muteData[chatId].includes(target)) {
+    muteData[chatId].push(target);
+    fs.writeFileSync(mutePath, JSON.stringify(muteData, null, 2));
+    await conn.sendMessage(chatId, {
+      text: `🔇 Usuario @${target.split("@")[0]} ha sido muteado.`,
+      mentions: [target]
+    }, { quoted: msg });
+  } else {
+    await conn.sendMessage(chatId, {
+      text: "⚠️ Este usuario ya está muteado.",
+      mentions: [target]
+    }, { quoted: msg });
+  }
 };
 
-handler.before = async (m, { conn }) => {
-    if (mutedUsers.has(m.sender) && m.mtype !== 'stickerMessage') {
-        try {
-            await conn.sendMessage(m.chat, { delete: m.key });
-        } catch (e) {
-            console.error(e);
-        }
-    }
-};
-
-handler.help = ['mute', 'unmute'];
-handler.tags = ['group'];
-handler.command = /^(mute|unmute)$/i;
-handler.group = true;
-handler.admin = true;
-handler.botAdmin = true;
-
-export default handler;
+handler.command = ["mute"];
+module.exports = handler;
