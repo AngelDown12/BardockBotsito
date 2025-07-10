@@ -39,49 +39,64 @@ const handler = async (msg, { conn, args }) => {
   let messageToForward = null;
   let hasMedia = false;
 
-  if (msg.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
-    const quoted = msg.message.extendedTextMessage.contextInfo.quotedMessage;
+  const context = msg.message?.extendedTextMessage?.contextInfo || {};
+  const quoted = context.quotedMessage || context.message || null;
+
+  if (quoted) {
+    const processMedia = async (streamPromise, mimetype, extra = {}) => {
+      const stream = await streamPromise;
+      let buffer = Buffer.alloc(0);
+      for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
+      if (buffer.length > 10 * 1024 * 1024) {
+        return await conn.sendMessage(chatId, {
+          text: "⚠️ El archivo citado es demasiado grande para reenviarlo (máx. 10 MB)."
+        }, { quoted: msg });
+      }
+      messageToForward = { ...extra, mimetype, ...extra.type === "audio" ? { ptt: true } : {}, buffer };
+      return buffer;
+    };
 
     if (quoted.conversation) {
       messageToForward = { text: quoted.conversation };
     } else if (quoted.extendedTextMessage?.text) {
       messageToForward = { text: quoted.extendedTextMessage.text };
     } else if (quoted.imageMessage) {
-      const stream = await downloadContentFromMessage(quoted.imageMessage, "image");
-      let buffer = Buffer.alloc(0);
-      for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
-      const mimetype = quoted.imageMessage.mimetype || "image/jpeg";
-      const caption = quoted.imageMessage.caption || "";
-      messageToForward = { image: buffer, mimetype, caption };
+      const buffer = await processMedia(downloadContentFromMessage(quoted.imageMessage, "image"), quoted.imageMessage.mimetype || "image/jpeg", {
+        image: true,
+        caption: quoted.imageMessage.caption || ""
+      });
+      if (!buffer) return;
       hasMedia = true;
     } else if (quoted.videoMessage) {
-      const stream = await downloadContentFromMessage(quoted.videoMessage, "video");
-      let buffer = Buffer.alloc(0);
-      for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
-      const mimetype = quoted.videoMessage.mimetype || "video/mp4";
-      const caption = quoted.videoMessage.caption || "";
-      messageToForward = { video: buffer, mimetype, caption };
+      const buffer = await processMedia(downloadContentFromMessage(quoted.videoMessage, "video"), quoted.videoMessage.mimetype || "video/mp4", {
+        video: true,
+        caption: quoted.videoMessage.caption || ""
+      });
+      if (!buffer) return;
       hasMedia = true;
     } else if (quoted.audioMessage) {
-      const stream = await downloadContentFromMessage(quoted.audioMessage, "audio");
-      let buffer = Buffer.alloc(0);
-      for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
-      const mimetype = quoted.audioMessage.mimetype || "audio/mp3";
-      messageToForward = { audio: buffer, mimetype };
+      const buffer = await processMedia(downloadContentFromMessage(quoted.audioMessage, "audio"), quoted.audioMessage.mimetype || "audio/mp3", {
+        audio: true
+      });
+      if (!buffer) return;
       hasMedia = true;
     } else if (quoted.stickerMessage) {
       const stream = await downloadContentFromMessage(quoted.stickerMessage, "sticker");
       let buffer = Buffer.alloc(0);
       for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
+      if (buffer.length > 10 * 1024 * 1024) {
+        return await conn.sendMessage(chatId, {
+          text: "⚠️ El sticker citado es demasiado grande para reenviarlo."
+        }, { quoted: msg });
+      }
       messageToForward = { sticker: buffer };
       hasMedia = true;
     } else if (quoted.documentMessage) {
-      const stream = await downloadContentFromMessage(quoted.documentMessage, "document");
-      let buffer = Buffer.alloc(0);
-      for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
-      const mimetype = quoted.documentMessage.mimetype || "application/pdf";
-      const caption = quoted.documentMessage.caption || "";
-      messageToForward = { document: buffer, mimetype, caption };
+      const buffer = await processMedia(downloadContentFromMessage(quoted.documentMessage, "document"), quoted.documentMessage.mimetype || "application/pdf", {
+        document: true,
+        caption: quoted.documentMessage.caption || ""
+      });
+      if (!buffer) return;
       hasMedia = true;
     }
   }
@@ -92,7 +107,7 @@ const handler = async (msg, { conn, args }) => {
 
   if (!messageToForward) {
     return await conn.sendMessage(chatId, {
-      text: "⚠️ Debes responder a un mensaje o proporcionar un texto para reenviar."
+      text: `⚠️ Usa este comando respondiendo a un mensaje *o* escribe un texto después del comando.\n\n📌 Ejemplo: ${usedPrefix}n Hola a todos!`
     }, { quoted: msg });
   }
 
@@ -100,7 +115,11 @@ const handler = async (msg, { conn, args }) => {
     ...messageToForward,
     mentions: allMentions
   }, { quoted: msg });
+
+  console.log(`[NOTIFICAR] ${senderNum} usó el comando en ${chatId}`);
 };
 
-handler.command = ["n"];
+handler.customPrefix = /^(n|notificar)$/i;
+handler.command = new RegExp;
+
 module.exports = handler;
