@@ -88,4 +88,4 @@ const handler = async (m, { conn, args }) => {
 };
 
 handler.command = ["n"];
-module.exports = handler;
+export default handler;
