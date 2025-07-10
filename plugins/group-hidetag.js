@@ -7,7 +7,7 @@ const handler = async (m, { conn, text, participants, isAdmin, isOwner, isBotAdm
   const contenido = text?.trim() || '';
   const firma = '> 𝐁𝐚𝐫𝐝𝐨𝐜𝐤 𝐁𝐨𝐭 🔥';
   const mensaje = contenido ? `${contenido}\n\n${firma}` : firma;
-  const options = { mentions: users, quoted: m };
+  const opciones = { mentions: users, quoted: m };
 
   if (m.quoted) {
     const quoted = m.quoted;
@@ -15,26 +15,25 @@ const handler = async (m, { conn, text, participants, isAdmin, isOwner, isBotAdm
     const media = /image|video|audio|sticker/.test(mime) ? await quoted.download() : null;
 
     if (/sticker/.test(mime)) {
-      return conn.sendMessage(m.chat, { sticker: media, ...options });
+      return conn.sendMessage(m.chat, { sticker: media, ...opciones });
     } else if (/image/.test(mime)) {
-      return conn.sendMessage(m.chat, { image: media, caption: mensaje, ...options });
+      return conn.sendMessage(m.chat, { image: media, caption: mensaje, ...opciones });
     } else if (/video/.test(mime)) {
-      return conn.sendMessage(m.chat, { video: media, caption: mensaje, mimetype: 'video/mp4', ...options });
+      return conn.sendMessage(m.chat, { video: media, caption: mensaje, mimetype: 'video/mp4', ...opciones });
     } else if (/audio/.test(mime)) {
-      return conn.sendMessage(m.chat, { audio: media, mimetype: 'audio/mpeg', ptt: true, ...options });
+      return conn.sendMessage(m.chat, { audio: media, mimetype: 'audio/mpeg', ptt: true, ...opciones });
     } else {
       const citado = quoted.text || quoted.body || mensaje;
-      return conn.sendMessage(m.chat, { text: citado, ...options });
+      return conn.sendMessage(m.chat, { text: citado, ...opciones });
     }
   }
 
-  return conn.sendMessage(m.chat, { text: mensaje, ...options });
+  return conn.sendMessage(m.chat, { text: mensaje, ...opciones });
 };
 
-// ✅ Soporte para comandos SIN prefijo
+// 🟡 Sin prefijo: solo al escribir "n", "noti", etc.
 handler.customPrefix = /^(n|hidetag|notify|noti|notificar|todos)(\s+.*)?$/i;
-handler.command = new RegExp(); // deja vacío para evitar conflictos
+handler.command = new RegExp(); // ← evita conflictos con .comandos
 handler.group = true;
-handler.register = true;
 
 export default handler;
