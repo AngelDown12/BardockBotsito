@@ -3,10 +3,10 @@ import fetch from 'node-fetch';
 let handler = async (m, { conn, text }) => {
   if (!text) {
     return m.reply(
-      `╭─⬣「 *bardock Ia* 」⬣
+      `╭─⬣「 *𝐁𝐚𝐫𝐝𝐨𝐜𝐤 𝐁𝐨𝐭* 」⬣
 │ ≡◦ 🎧 *Uso correcto del comando:*
 │ ≡◦ play shakira soltera
-╰─⬣\n> © Bardock Ia`
+╰─⬣`
     );
   }
 
@@ -16,7 +16,7 @@ let handler = async (m, { conn, text }) => {
 
     if (!json.status || !json.result?.downloadUrl) {
       return m.reply(
-        `╭─⬣「 *Barboza AI* 」⬣
+        `╭─⬣「 *𝐁𝐚𝐫𝐝𝐨𝐜𝐤 𝐁𝐨𝐭* 」⬣
 │ ≡◦ ❌ *No se encontró resultado para:* ${text}
 ╰─⬣`
       );
@@ -45,7 +45,7 @@ let handler = async (m, { conn, text }) => {
   } catch (e) {
     console.error(e);
     return m.reply(
-      `╭─⬣「 *Barboza AI* 」⬣
+      `╭─⬣「 *𝐁𝐚𝐫𝐝𝐨𝐜𝐤 𝐁𝐨𝐭* 」⬣
 │ ≡◦ ⚠️ *Error al procesar la solicitud.*
 │ ≡◦ Intenta nuevamente más tarde.
 ╰─⬣`
@@ -53,12 +53,8 @@ let handler = async (m, { conn, text }) => {
   }
 };
 
-handler.help = ['play'];
-handler.tags = ['descargas'];
-handler.command = /^$/; // ← no usa prefijo
-
-// 🟢 Detecta mensajes que comienzan con "play " sin prefijo
 handler.customPrefix = /^play\s+/i;
-handler.explicit = true;
+handler.command = new RegExp;
+handler.register = true;
 
 export default handler;
