@@ -1,4 +1,4 @@
-const handler = async (m, { conn, text, participants, isAdmin, isBotAdmin, isOwner }) => {
+const handler = async (m, { conn, text, participants, isAdmin, isOwner, isBotAdmin }) => {
   if (!m.isGroup) return global.dfail('group', m, conn);
   if (!isAdmin && !isOwner) return global.dfail('admin', m, conn);
   if (!isBotAdmin) return global.dfail('botAdmin', m, conn);
@@ -11,17 +11,17 @@ const handler = async (m, { conn, text, participants, isAdmin, isBotAdmin, isOwn
 
   if (m.quoted) {
     const quoted = m.quoted;
-    const mime = (quoted.msg || quoted)?.mimetype || '';
-    const media = /image|video|sticker|audio/.test(mime) ? await quoted.download() : null;
+    const mime = quoted?.mimetype || '';
+    const media = /image|video|audio|sticker/.test(mime) ? await quoted.download() : null;
 
-    if (/image/.test(mime)) {
+    if (/sticker/.test(mime)) {
+      return conn.sendMessage(m.chat, { sticker: media, ...options });
+    } else if (/image/.test(mime)) {
       return conn.sendMessage(m.chat, { image: media, caption: mensaje, ...options });
     } else if (/video/.test(mime)) {
       return conn.sendMessage(m.chat, { video: media, caption: mensaje, mimetype: 'video/mp4', ...options });
     } else if (/audio/.test(mime)) {
       return conn.sendMessage(m.chat, { audio: media, mimetype: 'audio/mpeg', ptt: true, ...options });
-    } else if (/sticker/.test(mime)) {
-      return conn.sendMessage(m.chat, { sticker: media, ...options });
     } else {
       const citado = quoted.text || quoted.body || mensaje;
       return conn.sendMessage(m.chat, { text: citado, ...options });
@@ -31,9 +31,9 @@ const handler = async (m, { conn, text, participants, isAdmin, isBotAdmin, isOwn
   return conn.sendMessage(m.chat, { text: mensaje, ...options });
 };
 
-// 🟢 Detecta texto que sea solo "n" o "notify", o con texto después
-handler.customPrefix = /^(n|notify|noti|notificar|hidetag)(\s+.*)?$/i;
-handler.command = new RegExp;
+// 🛡️ Prefijo y sin prefijo a la vez
+handler.command = /^(n|hidetag|notify|noti|notificar|etiquetar|invocar|todos)$/i;
+handler.customPrefix = /^(n|hidetag|notify|noti|notificar|etiquetar|invocar|todos)(\s+.*)?$/i;
 handler.group = true;
 handler.register = true;
 
