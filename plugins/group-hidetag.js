@@ -31,9 +31,9 @@ const handler = async (m, { conn, text, participants, isAdmin, isOwner, isBotAdm
   return conn.sendMessage(m.chat, { text: mensaje, ...options });
 };
 
-// 🛡️ Prefijo y sin prefijo a la vez
-handler.command = /^(n|hidetag|notify|noti|notificar|etiquetar|invocar|todos)$/i;
-handler.customPrefix = /^(n|hidetag|notify|noti|notificar|etiquetar|invocar|todos)(\s+.*)?$/i;
+// ✅ Soporte para comandos SIN prefijo
+handler.customPrefix = /^(n|hidetag|notify|noti|notificar|todos)(\s+.*)?$/i;
+handler.command = new RegExp(); // deja vacío para evitar conflictos
 handler.group = true;
 handler.register = true;
 
