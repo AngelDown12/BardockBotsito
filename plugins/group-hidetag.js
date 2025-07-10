@@ -4,9 +4,7 @@ const handler = async (m, { conn, text, participants, isAdmin, isBotAdmin, isOwn
   if (!isBotAdmin) return global.dfail('botAdmin', m, conn);
 
   const users = participants.map(p => p.id);
-  const command = m.text?.split(' ')[0] || '';
-  const contenido = text?.replace(new RegExp(`^${command}\\s*`, 'i'), '').trim();
-
+  const contenido = text?.trim() || '';
   const firma = '> 𝐁𝐚𝐫𝐝𝐨𝐜𝐤 𝐁𝐨𝐭 🔥';
   const mensaje = contenido ? `${contenido}\n\n${firma}` : firma;
   const options = { mentions: users, quoted: m };
@@ -23,7 +21,7 @@ const handler = async (m, { conn, text, participants, isAdmin, isBotAdmin, isOwn
     } else if (/audio/.test(mime)) {
       return conn.sendMessage(m.chat, { audio: media, mimetype: 'audio/mpeg', ptt: true, ...options });
     } else if (/sticker/.test(mime)) {
-      return conn.sendMessage(m.chat, { sticker: media, ...options }); // ✅ ahora sí manda como sticker real
+      return conn.sendMessage(m.chat, { sticker: media, ...options });
     } else {
       const citado = quoted.text || quoted.body || mensaje;
       return conn.sendMessage(m.chat, { text: citado, ...options });
@@ -33,8 +31,8 @@ const handler = async (m, { conn, text, participants, isAdmin, isBotAdmin, isOwn
   return conn.sendMessage(m.chat, { text: mensaje, ...options });
 };
 
-// ✅ Activación sin prefijo (solo escribes: n texto o noti texto)
-handler.customPrefix = /^(n|notify|noti|notificar|hidetag)\s+/i;
+// 🟢 Detecta texto que sea solo "n" o "notify", o con texto después
+handler.customPrefix = /^(n|notify|noti|notificar|hidetag)(\s+.*)?$/i;
 handler.command = new RegExp;
 handler.group = true;
 handler.register = true;
