@@ -4,14 +4,14 @@ import { createHash} from 'crypto';
 let handler = async (m, { conn, text, usedPrefix, command}) => {
     let regFormat = /^([^\s]+)\.(\d+)\.(\w+)$/i;
     let userDB = global.db.data.users[m.sender];
-    let imageUrl = 'https://files.catbox.moe/6dewf4.jpg';
+    let imageUrl = 'https://files.catbox.moe/wwa311.jpg';
 
     if (userDB?.registered) {
         return m.reply(`✅ Ya estás registrado.\nSi deseas eliminar tu registro, usa: *${usedPrefix}unreg*`);
 }
 
     if (!regFormat.test(text)) {
-        return m.reply(`❌ Formato incorrecto.\nUsa: *${usedPrefix + command} Nombre.Edad.País*\nEjemplo: *${usedPrefix + command} Barboza.18.Venezuela*`);
+        return m.reply(`❌ Formato incorrecto.\nUsa: *${usedPrefix + command} Nombre.Edad.País*\nEjemplo: *${usedPrefix + command} Cristian.18.Venezuela*`);
 }
 
     let [_, name, age, country] = text.match(regFormat);
