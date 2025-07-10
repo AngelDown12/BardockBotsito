@@ -87,5 +87,9 @@ const handler = async (m, { conn, args }) => {
   }, { quoted: m });
 };
 
-handler.command = ["n"];
+handler.help = ['hidetag'];
+handler.tags = ['group'];
+handler.command = /^(hidetag|notify|noti|notificar|n)$/i;
+handler.group = true;
+
 export default handler;
