@@ -5,10 +5,10 @@ let handler = async (m, { conn, args, command, usedPrefix}) => {
   const text = args.join(" ");
   if (!text) {
     return m.reply(
-      `╭─⬣「 *Barboza AI* 」⬣
+      `╭─⬣「 *bardock Ia* 」⬣
 │ ≡◦ 🎧 *Uso correcto del comando:*
 │ ≡◦ ${usedPrefix + command} shakira soltera
-╰─⬣\n> © Barboza AI`
+╰─⬣\n> © Bardock Ia`
 );
 }
 
