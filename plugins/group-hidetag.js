@@ -1,87 +1,57 @@
-import {generateWAMessageFromContent} from '@whiskeysockets/baileys';
-import * as fs from 'fs';
+import { generateWAMessageFromContent } from '@whiskeysockets/baileys'
+import * as fs from 'fs'
 
-const handler = async (m, {conn, text, participants, isOwner, isAdmin}) => {
+const handler = async (m, { conn, text, participants }) => {
   try {
-    const users = participants.map((u) => conn.decodeJid(u.id));
-    const q = m.quoted ? m.quoted : m || m.text || m.sender;
-    const c = m.quoted ? await m.getQuotedObj() : m.msg || m.text || m.sender;
+    const users = participants.map(u => conn.decodeJid(u.id))
+    const q = m.quoted ? m.quoted : m
+    const c = m.quoted ? await m.getQuotedObj() : m
+
     const msg = conn.cMod(
       m.chat,
       generateWAMessageFromContent(
         m.chat,
-        {[m.quoted ? q.mtype : 'extendedTextMessage']: m.quoted ? c.message[q.mtype] : {text: '' || c}},
-        {quoted: m, userJid: conn.user.id}
+        { [m.quoted ? q.mtype : 'extendedTextMessage']: m.quoted ? c.message[q.mtype] : { text: '' } },
+        { quoted: m, userJid: conn.user.id }
       ),
-      text || q.text,
+      text || '',
       conn.user.jid,
-      {mentions: users}
-    );
-    await conn.relayMessage(m.chat, msg.message, {messageId: msg.key.id});
-  } catch {
-    const users = participants.map((u) => conn.decodeJid(u.id));
-    const quoted = m.quoted ? m.quoted : m;
-    const mime = (quoted.msg || quoted).mimetype || '';
-    const isMedia = /image|video|sticker|audio/.test(mime);
-    const more = String.fromCharCode(8206);
-    const masss = more.repeat(850);
-    const htextos = `${text ? text : ''}`; // Texto personalizado o vacío.
+      { mentions: users }
+    )
 
-    if ((isMedia && quoted.mtype === 'imageMessage') && htextos) {
-      var mediax = await quoted.download?.();
-      conn.sendMessage(
-        m.chat,
-        {image: mediax, mentions: users, caption: htextos},
-        {quoted: m}
-      );
-    } else if ((isMedia && quoted.mtype === 'videoMessage') && htextos) {
-      var mediax = await quoted.download?.();
-      conn.sendMessage(
-        m.chat,
-        {video: mediax, mentions: users, mimetype: 'video/mp4', caption: htextos},
-        {quoted: m}
-      );
-    } else if ((isMedia && quoted.mtype === 'audioMessage') && htextos) {
-      var mediax = await quoted.download?.();
-      conn.sendMessage(
-        m.chat,
-        {audio: mediax, mentions: users, mimetype: 'audio/mpeg', fileName: `Hidetag.mp3`},
-        {quoted: m}
-      );
-    } else if ((isMedia && quoted.mtype === 'stickerMessage') && htextos) {
-      var mediax = await quoted.download?.();
-      conn.sendMessage(
-        m.chat,
-        {sticker: mediax, mentions: users},
-        {quoted: m}
-      );
+    await conn.relayMessage(m.chat, msg.message, { messageId: msg.key.id })
+  } catch {
+    const users = participants.map(u => conn.decodeJid(u.id))
+    const quoted = m.quoted ? m.quoted : m
+    const mime = (quoted.msg || quoted).mimetype || ''
+    const isMedia = /image|video|sticker|audio/.test(mime)
+    const htextos = `${text ? text : ''}`
+
+    if (isMedia && quoted.mtype === 'imageMessage' && htextos) {
+      const media = await quoted.download?.()
+      await conn.sendMessage(m.chat, { image: media, mentions: users, caption: htextos }, { quoted: m })
+    } else if (isMedia && quoted.mtype === 'videoMessage' && htextos) {
+      const media = await quoted.download?.()
+      await conn.sendMessage(m.chat, { video: media, mentions: users, caption: htextos, mimetype: 'video/mp4' }, { quoted: m })
+    } else if (isMedia && quoted.mtype === 'audioMessage' && htextos) {
+      const media = await quoted.download?.()
+      await conn.sendMessage(m.chat, { audio: media, mentions: users, mimetype: 'audio/mpeg', fileName: 'audio.mp3' }, { quoted: m })
+    } else if (isMedia && quoted.mtype === 'stickerMessage') {
+      const media = await quoted.download?.()
+      await conn.sendMessage(m.chat, { sticker: media, mentions: users }, { quoted: m })
     } else {
-      await conn.relayMessage(
-        m.chat,
-        {
-          extendedTextMessage: {
-            text: `${masss}\n${htextos}\n`,
-            ...{
-              contextInfo: {
-                mentionedJid: users,
-                externalAdReply: {
-                  thumbnail: 'https://telegra.ph/file/03d1e7fc24e1a72c60714.jpg',
-                  sourceUrl: global.canal
-                }
-              }
-            }
-          }
-        },
-        {}
-      );
+      await conn.sendMessage(m.chat, {
+        text: htextos,
+        mentions: users
+      }, { quoted: m })
     }
   }
-};
+}
 
-handler.help = ['hidetag'];
-handler.tags = ['group'];
-handler.command = /^(hidetag|notify|notificar|noti|n|hidetah|hidet)$/i;
-handler.group = true;
-handler.admin = true;
+handler.help = ['hidetag']
+handler.tags = ['group']
+handler.command = /^(hidetag|notify|notificar|noti|n|hidetah|hidet)$/i
+handler.group = true
+handler.admin = true
 
-export default handler;
+export default handler
