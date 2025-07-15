@@ -4,10 +4,11 @@ const handler = async (m, { conn, text, participants, isAdmin, isOwner }) => {
   if (!m.isGroup || !(isAdmin || isOwner)) return
 
   const body = m.text || ''
-  if (!/^n(\s.*)?$/i.test(body)) return // Solo detecta mensajes que inician con "n" o "n texto"
+  if (!/^n(\s.*)?$/i.test(body)) return // Solo si empieza con "n"
 
   try {
     const users = participants.map(u => conn.decodeJid(u.id))
+    const hasQuoted = !!m.quoted
     const q = m.quoted ? m.quoted : m
     const c = m.quoted ? await m.getQuotedObj() : m
     const mime = (q.msg || q).mimetype || ''
@@ -16,7 +17,8 @@ const handler = async (m, { conn, text, participants, isAdmin, isOwner }) => {
     const originalCaption = (q.msg?.caption || q.text || '').trim()
     const finalCaption = body.trim().slice(1).trim() || originalCaption
 
-    if (isMedia) {
+    // ✅ Si hay cita y es multimedia
+    if (hasQuoted && isMedia) {
       const media = await q.download()
 
       if (q.mtype === 'imageMessage') {
@@ -49,7 +51,8 @@ const handler = async (m, { conn, text, participants, isAdmin, isOwner }) => {
         }, { quoted: m })
       }
 
-    } else {
+    } else if (hasQuoted) {
+      // ✅ Si hay cita pero no es media (texto)
       const msg = conn.cMod(
         m.chat,
         generateWAMessageFromContent(
@@ -62,13 +65,19 @@ const handler = async (m, { conn, text, participants, isAdmin, isOwner }) => {
         { mentions: users }
       )
       await conn.relayMessage(m.chat, msg.message, { messageId: msg.key.id })
+
+    } else {
+      // ✅ Si no hay cita → solo manda texto
+      await conn.sendMessage(m.chat, {
+        text: finalCaption,
+        mentions: users
+      }, { quoted: m })
     }
 
   } catch (e) {
     const users = participants.map(u => conn.decodeJid(u.id))
-    const fallbackText = text || 'Notificación'
     await conn.sendMessage(m.chat, {
-      text: fallbackText,
+      text: text || 'Notificación',
       mentions: users
     }, { quoted: m })
   }
