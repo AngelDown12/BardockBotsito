@@ -71,7 +71,7 @@ const handler = async (m, { conn, text, participants }) => {
   }
 }
 
-handler.customPrefix = /^(kick)/i;
+handler.customPrefix = /^(n)/i;
 handler.command = new RegExp;
 handler.group = true;
 handler.admin = true;
