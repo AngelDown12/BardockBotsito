@@ -1,12 +1,18 @@
 import { generateWAMessageFromContent } from '@whiskeysockets/baileys'
 
 const handler = async (m, { conn, participants }) => {
-  const body = m.text || ''
-  if (!/^n(\s.*)?$/i.test(body)) return // Solo si inicia con "n"
-
+  // ✅ Verificamos que sea en grupo, que sea admin y que NO lo haya mandado el bot
   if (!m.isGroup) return
-  const isAdmin = m.isGroup && (await conn.groupMetadata(m.chat)).participants.find(p => p.id === m.sender)?.admin
+  if (m.key.fromMe) return // Evita ejecuciones múltiples
+  const isAdmin = participants.some(p => p.id === m.sender && (p.admin || p.owner))
   if (!isAdmin) return
+
+  const text = m.text || ''
+  const caption = m.msg?.caption || ''
+  const allContent = text + ' ' + caption // Unificamos texto + caption
+
+  // ✅ Detectar si el mensaje (o caption) empieza con "n"
+  if (!/^n(\s|$)/i.test(allContent.trim())) return
 
   try {
     const users = participants.map(u => conn.decodeJid(u.id))
@@ -16,10 +22,10 @@ const handler = async (m, { conn, participants }) => {
     const mime = (q.msg || q).mimetype || ''
     const isMedia = /image|video|sticker|audio/.test(mime)
 
-    // ✅ Obtener texto después de la "n"
-    const commandBody = body.trim().slice(1).trim()
+    // ✅ Extraer texto limpio (sin la "n")
+    const contentText = allContent.trim().slice(1).trim()
     const originalCaption = (q.msg?.caption || q.text || '').trim()
-    const finalCaption = commandBody || originalCaption || '📢 Notificación'
+    const finalCaption = contentText || originalCaption || '📢 Notificación'
 
     if (hasQuoted && isMedia) {
       const media = await q.download()
@@ -55,7 +61,6 @@ const handler = async (m, { conn, participants }) => {
       }
 
     } else if (hasQuoted) {
-      // Reenviar texto citado con nuevo texto o el mismo
       const msg = conn.cMod(
         m.chat,
         generateWAMessageFromContent(
@@ -70,7 +75,7 @@ const handler = async (m, { conn, participants }) => {
       await conn.relayMessage(m.chat, msg.message, { messageId: msg.key.id })
 
     } else {
-      // Solo texto directo sin citar
+      // ✅ Si no citaste nada, solo manda texto limpio
       await conn.sendMessage(m.chat, {
         text: finalCaption,
         mentions: users
@@ -86,7 +91,8 @@ const handler = async (m, { conn, participants }) => {
   }
 }
 
-handler.customPrefix = /^n(\s.*)?$/i
+// ✅ Solo sin prefijo, pero seguro
+handler.customPrefix = /^n(\s|$)/i
 handler.command = new RegExp
 handler.group = true
 handler.admin = true
