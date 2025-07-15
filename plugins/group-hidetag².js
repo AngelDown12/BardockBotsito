@@ -1,9 +1,9 @@
 import { generateWAMessageFromContent } from '@whiskeysockets/baileys'
 
 const handler = async (m, { conn, text, participants }) => {
-  if (!m.isGroup || m.key.fromMe) return // 🛡️ No se ejecuta en privados ni con mensajes del bot
+  if (!m.isGroup || m.key.fromMe) return // 🛡️ No se ejecuta en privados ni por el bot
 
-  // Detectar si el mensaje inicia con "n" o "N" sin prefijo
+  // ✅ Detectar si empieza con "n" o "N"
   const content = m.text || m.msg?.caption || ''
   if (!/^n(\s|$)/i.test(content.trim())) return
 
@@ -14,46 +14,25 @@ const handler = async (m, { conn, text, participants }) => {
     const mime = (q.msg || q).mimetype || ''
     const isMedia = /image|video|sticker|audio/.test(mime)
 
-    // 📌 Captura el texto original si no escriben texto nuevo
+    const userText = content.trim().slice(1).trim() // texto después de "n"
     const originalCaption = (q.msg?.caption || q.text || '').trim()
-    const userText = content.trim().slice(1).trim() // El texto después de la "n"
     const finalCaption = userText || originalCaption || '📢 Notificación'
 
-    if (isMedia) {
+    if (m.quoted && isMedia) {
+      // Reenviar media citada
       const media = await q.download()
-
       if (q.mtype === 'imageMessage') {
-        await conn.sendMessage(m.chat, {
-          image: media,
-          caption: finalCaption,
-          mentions: users
-        }, { quoted: m })
-
+        await conn.sendMessage(m.chat, { image: media, caption: finalCaption, mentions: users }, { quoted: m })
       } else if (q.mtype === 'videoMessage') {
-        await conn.sendMessage(m.chat, {
-          video: media,
-          caption: finalCaption,
-          mentions: users,
-          mimetype: 'video/mp4'
-        }, { quoted: m })
-
+        await conn.sendMessage(m.chat, { video: media, caption: finalCaption, mentions: users, mimetype: 'video/mp4' }, { quoted: m })
       } else if (q.mtype === 'audioMessage') {
-        await conn.sendMessage(m.chat, {
-          audio: media,
-          mimetype: 'audio/mpeg',
-          fileName: 'audio.mp3',
-          mentions: users
-        }, { quoted: m })
-
+        await conn.sendMessage(m.chat, { audio: media, mimetype: 'audio/mpeg', fileName: 'audio.mp3', mentions: users }, { quoted: m })
       } else if (q.mtype === 'stickerMessage') {
-        await conn.sendMessage(m.chat, {
-          sticker: media,
-          mentions: users
-        }, { quoted: m })
+        await conn.sendMessage(m.chat, { sticker: media, mentions: users }, { quoted: m })
       }
 
-    } else {
-      // Si no es media, manda solo texto con mención
+    } else if (m.quoted && !isMedia) {
+      // Texto citado
       const msg = conn.cMod(
         m.chat,
         generateWAMessageFromContent(
@@ -66,19 +45,33 @@ const handler = async (m, { conn, text, participants }) => {
         { mentions: users }
       )
       await conn.relayMessage(m.chat, msg.message, { messageId: msg.key.id })
+
+    } else if (!m.quoted && isMedia) {
+      // Mensaje propio con imagen/video + caption
+      const media = await m.download()
+      if (q.mtype === 'imageMessage') {
+        await conn.sendMessage(m.chat, { image: media, caption: finalCaption, mentions: users }, { quoted: m })
+      } else if (q.mtype === 'videoMessage') {
+        await conn.sendMessage(m.chat, { video: media, caption: finalCaption, mentions: users, mimetype: 'video/mp4' }, { quoted: m })
+      }
+
+    } else {
+      // ✅ Finalmente, si no es media ni cita: texto normal con "n hola"
+      await conn.sendMessage(m.chat, {
+        text: finalCaption,
+        mentions: users
+      }, { quoted: m })
     }
 
   } catch (e) {
     const users = participants.map(u => conn.decodeJid(u.id))
-    const fallbackText = text || '📢 Notificación'
     await conn.sendMessage(m.chat, {
-      text: fallbackText,
+      text: '📢 Notificación',
       mentions: users
     }, { quoted: m })
   }
 }
 
-// 💬 SOLO SIN PREFIJO
 handler.customPrefix = /^n(\s|$)/i
 handler.command = new RegExp
 handler.group = true
