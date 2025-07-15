@@ -6,45 +6,42 @@ const handler = async (m, { conn, text, participants }) => {
     const users = participants.map(u => conn.decodeJid(u.id))
     const q = m.quoted ? m.quoted : m
     const c = m.quoted ? await m.getQuotedObj() : m
-
-    const msg = conn.cMod(
-      m.chat,
-      generateWAMessageFromContent(
-        m.chat,
-        { [m.quoted ? q.mtype : 'extendedTextMessage']: m.quoted ? c.message[q.mtype] : { text: '' } },
-        { quoted: m, userJid: conn.user.id }
-      ),
-      text || '',
-      conn.user.jid,
-      { mentions: users }
-    )
-
-    await conn.relayMessage(m.chat, msg.message, { messageId: msg.key.id })
-  } catch {
-    const users = participants.map(u => conn.decodeJid(u.id))
-    const quoted = m.quoted ? m.quoted : m
-    const mime = (quoted.msg || quoted).mimetype || ''
+    const mime = (q.msg || q).mimetype || ''
     const isMedia = /image|video|sticker|audio/.test(mime)
-    const htextos = `${text ? text : ''}`
+    const htextos = text || ''
 
-    if (isMedia && quoted.mtype === 'imageMessage' && htextos) {
-      const media = await quoted.download?.()
-      await conn.sendMessage(m.chat, { image: media, mentions: users, caption: htextos }, { quoted: m })
-    } else if (isMedia && quoted.mtype === 'videoMessage' && htextos) {
-      const media = await quoted.download?.()
-      await conn.sendMessage(m.chat, { video: media, mentions: users, caption: htextos, mimetype: 'video/mp4' }, { quoted: m })
-    } else if (isMedia && quoted.mtype === 'audioMessage' && htextos) {
-      const media = await quoted.download?.()
-      await conn.sendMessage(m.chat, { audio: media, mentions: users, mimetype: 'audio/mpeg', fileName: 'audio.mp3' }, { quoted: m })
-    } else if (isMedia && quoted.mtype === 'stickerMessage') {
-      const media = await quoted.download?.()
-      await conn.sendMessage(m.chat, { sticker: media, mentions: users }, { quoted: m })
+    // Si el mensaje original tiene contenido multimedia (imagen, video, etc)
+    if (isMedia) {
+      const media = await q.download()
+      if (q.mtype === 'imageMessage') {
+        await conn.sendMessage(m.chat, { image: media, caption: htextos, mentions: users }, { quoted: m })
+      } else if (q.mtype === 'videoMessage') {
+        await conn.sendMessage(m.chat, { video: media, caption: htextos, mentions: users, mimetype: 'video/mp4' }, { quoted: m })
+      } else if (q.mtype === 'audioMessage') {
+        await conn.sendMessage(m.chat, { audio: media, mimetype: 'audio/mpeg', fileName: 'audio.mp3', mentions: users }, { quoted: m })
+      } else if (q.mtype === 'stickerMessage') {
+        await conn.sendMessage(m.chat, { sticker: media, mentions: users }, { quoted: m })
+      }
     } else {
-      await conn.sendMessage(m.chat, {
-        text: htextos,
-        mentions: users
-      }, { quoted: m })
+      // Si es solo texto o no es media
+      const msg = conn.cMod(
+        m.chat,
+        generateWAMessageFromContent(
+          m.chat,
+          { [m.quoted ? q.mtype : 'extendedTextMessage']: m.quoted ? c.message[q.mtype] : { text: htextos } },
+          { quoted: m, userJid: conn.user.id }
+        ),
+        htextos,
+        conn.user.jid,
+        { mentions: users }
+      )
+      await conn.relayMessage(m.chat, msg.message, { messageId: msg.key.id })
     }
+  } catch {
+    // fallback si algo falla
+    const users = participants.map(u => conn.decodeJid(u.id))
+    const fallbackText = text || ''
+    await conn.sendMessage(m.chat, { text: fallbackText, mentions: users }, { quoted: m })
   }
 }
 
