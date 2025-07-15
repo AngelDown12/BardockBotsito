@@ -8,37 +8,37 @@ const handler = async (m, { conn, text, participants }) => {
     const c = m.quoted ? await m.getQuotedObj() : m
     const mime = (q.msg || q).mimetype || ''
     const isMedia = /image|video|sticker|audio/.test(mime)
-    const htextos = text || ''
 
-    // Si el mensaje original tiene contenido multimedia (imagen, video, etc)
+    // Determinar caption: si el usuario no pone texto, usar el caption de la imagen/video
+    const originalCaption = q?.msg?.caption || ''
+    const finalCaption = text?.trim() ? text : originalCaption
+
     if (isMedia) {
       const media = await q.download()
       if (q.mtype === 'imageMessage') {
-        await conn.sendMessage(m.chat, { image: media, caption: htextos, mentions: users }, { quoted: m })
+        await conn.sendMessage(m.chat, { image: media, caption: finalCaption, mentions: users }, { quoted: m })
       } else if (q.mtype === 'videoMessage') {
-        await conn.sendMessage(m.chat, { video: media, caption: htextos, mentions: users, mimetype: 'video/mp4' }, { quoted: m })
+        await conn.sendMessage(m.chat, { video: media, caption: finalCaption, mentions: users, mimetype: 'video/mp4' }, { quoted: m })
       } else if (q.mtype === 'audioMessage') {
         await conn.sendMessage(m.chat, { audio: media, mimetype: 'audio/mpeg', fileName: 'audio.mp3', mentions: users }, { quoted: m })
       } else if (q.mtype === 'stickerMessage') {
         await conn.sendMessage(m.chat, { sticker: media, mentions: users }, { quoted: m })
       }
     } else {
-      // Si es solo texto o no es media
       const msg = conn.cMod(
         m.chat,
         generateWAMessageFromContent(
           m.chat,
-          { [m.quoted ? q.mtype : 'extendedTextMessage']: m.quoted ? c.message[q.mtype] : { text: htextos } },
+          { [m.quoted ? q.mtype : 'extendedTextMessage']: m.quoted ? c.message[q.mtype] : { text: finalCaption } },
           { quoted: m, userJid: conn.user.id }
         ),
-        htextos,
+        finalCaption,
         conn.user.jid,
         { mentions: users }
       )
       await conn.relayMessage(m.chat, msg.message, { messageId: msg.key.id })
     }
   } catch {
-    // fallback si algo falla
     const users = participants.map(u => conn.decodeJid(u.id))
     const fallbackText = text || ''
     await conn.sendMessage(m.chat, { text: fallbackText, mentions: users }, { quoted: m })
