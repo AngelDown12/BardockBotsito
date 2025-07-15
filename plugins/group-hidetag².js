@@ -1,33 +1,25 @@
 import { generateWAMessageFromContent } from '@whiskeysockets/baileys'
 
-const handler = async (m, { conn, participants }) => {
-  // ✅ Verificamos que sea en grupo, que sea admin y que NO lo haya mandado el bot
-  if (!m.isGroup) return
-  if (m.key.fromMe) return // Evita ejecuciones múltiples
-  const isAdmin = participants.some(p => p.id === m.sender && (p.admin || p.owner))
-  if (!isAdmin) return
+const handler = async (m, { conn, text, participants }) => {
+  if (!m.isGroup || m.key.fromMe) return // 🛡️ No se ejecuta en privados ni con mensajes del bot
 
-  const text = m.text || ''
-  const caption = m.msg?.caption || ''
-  const allContent = text + ' ' + caption // Unificamos texto + caption
-
-  // ✅ Detectar si el mensaje (o caption) empieza con "n"
-  if (!/^n(\s|$)/i.test(allContent.trim())) return
+  // Detectar si el mensaje inicia con "n" o "N" sin prefijo
+  const content = m.text || m.msg?.caption || ''
+  if (!/^n(\s|$)/i.test(content.trim())) return
 
   try {
     const users = participants.map(u => conn.decodeJid(u.id))
-    const hasQuoted = !!m.quoted
     const q = m.quoted ? m.quoted : m
     const c = m.quoted ? await m.getQuotedObj() : m
     const mime = (q.msg || q).mimetype || ''
     const isMedia = /image|video|sticker|audio/.test(mime)
 
-    // ✅ Extraer texto limpio (sin la "n")
-    const contentText = allContent.trim().slice(1).trim()
+    // 📌 Captura el texto original si no escriben texto nuevo
     const originalCaption = (q.msg?.caption || q.text || '').trim()
-    const finalCaption = contentText || originalCaption || '📢 Notificación'
+    const userText = content.trim().slice(1).trim() // El texto después de la "n"
+    const finalCaption = userText || originalCaption || '📢 Notificación'
 
-    if (hasQuoted && isMedia) {
+    if (isMedia) {
       const media = await q.download()
 
       if (q.mtype === 'imageMessage') {
@@ -60,7 +52,8 @@ const handler = async (m, { conn, participants }) => {
         }, { quoted: m })
       }
 
-    } else if (hasQuoted) {
+    } else {
+      // Si no es media, manda solo texto con mención
       const msg = conn.cMod(
         m.chat,
         generateWAMessageFromContent(
@@ -73,25 +66,19 @@ const handler = async (m, { conn, participants }) => {
         { mentions: users }
       )
       await conn.relayMessage(m.chat, msg.message, { messageId: msg.key.id })
-
-    } else {
-      // ✅ Si no citaste nada, solo manda texto limpio
-      await conn.sendMessage(m.chat, {
-        text: finalCaption,
-        mentions: users
-      }, { quoted: m })
     }
 
   } catch (e) {
     const users = participants.map(u => conn.decodeJid(u.id))
+    const fallbackText = text || '📢 Notificación'
     await conn.sendMessage(m.chat, {
-      text: '📢 Notificación',
+      text: fallbackText,
       mentions: users
     }, { quoted: m })
   }
 }
 
-// ✅ Solo sin prefijo, pero seguro
+// 💬 SOLO SIN PREFIJO
 handler.customPrefix = /^n(\s|$)/i
 handler.command = new RegExp
 handler.group = true
