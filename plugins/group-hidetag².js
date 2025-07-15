@@ -8,9 +8,6 @@ const handler = async (m, { conn, text, participants }) => {
     const mime = (q.msg || q).mimetype || ''
     const isMedia = /image|video|sticker|audio/.test(mime)
 
-const body = m.text || ''
-  if (!/^n(\s.*)?$/i.test(body)) return // Solo si empieza con "n"
-
     // 📌 Captura el texto original si no escriben texto nuevo
     const originalCaption = (q.msg?.caption || q.text || '').trim()
     const finalCaption = text.trim() ? text : originalCaption
@@ -74,9 +71,10 @@ const body = m.text || ''
   }
 }
 
-handler.customPrefix = /^(n)/i;
-handler.command = new RegExp;
-handler.group = true;
-handler.admin = true;
+handler.help = ['hidetag']
+handler.tags = ['group']
+handler.command = /^(hidetag|notify|notificar|noti|n|hidetah|hidet)$/i
+handler.group = true
+handler.admin = true
 
-export default handler;
+export default handler
